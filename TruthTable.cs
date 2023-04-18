@@ -3,12 +3,8 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Linq.Expressions;
-	using System.Reflection;
-	using System.Runtime.CompilerServices;
 	using System.Text.RegularExpressions;
 	using System.Windows.Forms;
-	using static System.Net.Mime.MediaTypeNames;
 
 	public static class TruthTable
 	{
@@ -16,21 +12,22 @@
 		static readonly DataGridView dgv = new DataGridView();
 
 		//options
-		static readonly char not = '!';
 		static readonly char openBracket = '(';
 		static readonly char closeBracket = ')';
+		static readonly char not = '!';
 		static readonly char and = '&';
 		static readonly char or = '|';
-		static readonly string expression = "(!A & !C) | !A & !C | (D | !B & (B & !A) | A) & (C | !C)"; //A & !C & (D | !B & (B & !A) | A) & (C | !C)
+		static readonly string expression = "a & b & c & d & e"; //A & !C & (D | !B & (B & !A) | A) & (C | !C)
 		static readonly HashSet<string> variables = Variables(expression);
 		static string expressionCode = GetExpressionCode(expression);
 
-
+		[STAThread]
 		static void Main(string[] args)
 		{
-			PrintTable(expression);
 			dgv.Dock = DockStyle.Fill;
 			f.Controls.Add(dgv);
+
+			PrintTable(expression);
 			f.ShowDialog();
 			Console.Read();
 		}
@@ -49,11 +46,6 @@
 			matrix.ForEach(row =>
 			{
 				dgv.Rows.Add(row.ToArray());
-				row.ForEach(column =>
-				{
-					//Console.Write($"{column,3}");
-				});
-				//Console.WriteLine();
 			});
 			variables.ToList().ForEach(variable => Console.WriteLine(variable));
 		}
@@ -62,27 +54,27 @@
 		{
 			List<List<string>> matrix = new List<List<string>>();
 
-			int lettersCount = Variables(expression).Count();
-			int matrixHeight = (int)Math.Pow(2, lettersCount);
+			int variablesCount = Variables(expression).Count();
+			int matrixHeight = (int)Math.Pow(2, variablesCount);
 
 			matrix.Add(new List<string>());
 
 			for (int i = 0; i < matrixHeight; i++)
 			{
 				matrix.Add(new List<string>());
-				for (int j = 0; j < lettersCount; j++)
+				for (int j = 0; j < variablesCount; j++)
 				{
 					matrix[i].Add(string.Empty);
 				}
 			}
 
-			for (int letterPosition = 0; letterPosition < lettersCount; letterPosition++)
+			for (int letterPosition = 0; letterPosition < variablesCount; letterPosition++)
 			{
 				int repeatAfter = (int)(matrixHeight / Math.Pow(2, letterPosition + 1));
 				string answer = "0";
 				for (int i = 0; i < matrixHeight; i++)
 				{
-					if (i % repeatAfter == 0) answer = answer == "1" ? "0" : "1"; //Перевернуть 0 и 1
+					if (i % repeatAfter == 0) answer = answer.Equals("1") ? "0" : "1"; //Перевернуть 0 и 1
 					matrix[i][letterPosition] = answer;
 				}
 			}
@@ -264,7 +256,7 @@
 			Console.WriteLine($"CalculateBrackets exit {bracketsCodePart} {expressionCode}");
 		}
 
-		public static string GetNextBrackets(string expression)
+		static string GetNextBrackets(string expression)
 		{
 			if (!expression.Contains(openBracket))
 				return expression;
@@ -299,7 +291,6 @@
 				.ToArray();
 		}
 
-
 		static int GetIndex(string expressionPart)
 		{
 			/// Returns index from expressionCodePart like {0}
@@ -328,6 +319,5 @@
 
 			return new HashSet<string>(temp);
 		}
-
 	}
 }
